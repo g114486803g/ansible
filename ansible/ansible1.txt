@@ -1,0 +1,16 @@
+mode=0755" 
+
+自动解压
+ansible test -m unarchive -a 'src=/ok/test/2019-05-22_18-45-04_dobi_php.tar.gz dest=/ copy=yes owner=qwe group=qwe'
+
+自动解压
+ansible test -m unarchive -a 'src=/tmp/java.zip dest=/dobi copy=yes owner=qwe group=qwe'
+
+
+自动解压
+ansible test -m unarchive -a 'src=/tmp/123dobi.zip dest=/ copy=yes'
+
+
+
+支持管道
+ansible uat -m shell -a 'ps -ef | grep nginx'
