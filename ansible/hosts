@@ -1,0 +1,2 @@
+[bao]
+192.168.1.186  ansible_ssh_user=root ansible_ssh_pass='123qwe'
