@@ -1,0 +1,212 @@
+ansible安装.-
+
+rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-6.noarch.rpm
+
+yum install ansible
+yum -y install sshpass
+
+
+ansible安装.二
+
+easy_install ansible
+
+easy_install simplejson
+
+easy_install pip
+
+yum install gcc python-devel
+
+easy_install ansible
+
+
+或者
+pip install ansible
+
+开始使用  te表示 hosts文件里面的te组的IP ,-u 指定用户  可以加 -k 显示提示密码输入
+
+[root@admin3 .ssh]# cat /etc/ansible/hosts
+[te]
+192.168.1.104:10002
+#可以直接加端口
+
+[op]
+
+192.168.1.108
+
+
+ansible -i /etc/ansible/hosts te -u root -m shell -a 'ls -l /home/' 
+
+
+可以省略这样
+[root@admin3 .ssh]# ansible op  -a 'ls -l /tmp'
+192.168.1.108 | SUCCESS | rc=0 >>
+总用量 16
+drwx------ 2 root       root       4096 Apr 20 21:33 pulse-mVqiPVbPz8VO
+drwx------ 2 Debian-gdm Debian-gdm 4096 Apr 20 21:33 pulse-RkokyB4tY56h
+drwx------ 2 root       root       4096 Apr 20 21:33 ssh-RW2mxPcP4VIY
+drwxr-xr-x 2 root       root       4096 Apr 20 21:33 tracker-root
+
+查看需要的主机是否ping通
+[root@admin3 .ssh]# ansible all -m ping 
+192.168.1.108 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+192.168.1.104 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+
+Ping一个组是否通
+[root@admin3 .ssh]# ansible te -m ping 
+192.168.1.104 | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+
+
+
+ansible-doc 各种查看
+
+[root@admin3 .ssh]# ansible-doc -s user
+less 458 (POSIX regular expressions)
+Copyright (C) 1984-2012 Mark Nudelman
+
+less comes with NO WARRANTY, to the extent permitted by law.
+For information about the terms of redistribution,
+see the file named README in the less distribution.
+Homepage: http://www.greenwoodsoftware.com/less
+- name: Manage user accounts
+  action: user
+      append                 # If `yes', will only add groups, not set them to
+                               just the list in
+                               `groups'.
+      comment                # Optionally sets the description (aka `GECOS') of
+                               user account.
+      createhome             # Unless set to `no', a home directory will be made
+                               for the user when
+                               the account is
+                               created or if the
+                               home directory
+                               does not exist.
+      expires                # An expiry time for the user in epoch, it will be
+                               ignored on
+                               platforms that do
+                               not support this.
+
+
+收集服务器的信息
+[root@admin3 .ssh]# ansible te -m setup
+192.168.1.104 | SUCCESS => {
+    "ansible_facts": {
+        "ansible_all_ipv4_addresses": [
+            "192.168.1.104"
+        ], 
+        "ansible_all_ipv6_addresses": [
+            "fe80::a00:27ff:fec3:27ea"
+        ], 
+        "ansible_architecture": "x86_64", 
+        "ansible_bios_date": "12/01/2006", 
+        "ansible_bios_version": "VirtualBox", 
+        "ansible_cmdline": {
+            "BOOT_IMAGE": "/vmlinuz-3.10.0-123.el7.x86_64", 
+            "LANG": "en_US.UTF-8", 
+            "crashkernel": "auto", 
+
+=======================上传文件=======================
+将当前lzo-2.03.tar.gz 放送到远端的服务器上上传的时候把文件改名
+[root@admin3 ~]# ansible te -m copy -a 'src=lzo-2.03.tar.gz dest=/tmp/jsj.tar.gz'
+192.168.1.104 | SUCCESS => {
+    "changed": true, 
+    "checksum": "135a50699296e853362a3d11b9f872c74c8b8c5a", 
+    "dest": "/tmp/jsj.tar.gz", 
+    "gid": 0, 
+    "group": "root", 
+    "md5sum": "0c3d078c2e8ea5a88971089a2f02a726", 
+    "mode": "0644", 
+    "owner": "root", 
+    "secontext": "unconfined_u:object_r:admin_home_t:s0", 
+    "size": 626042, 
+    "src": "/root/.ansible/tmp/ansible-tmp-1461164894.63-101582627098838/source", 
+    "state": "file", 
+    "uid": 0
+}
+
+查看
+[root@admin3 ~]# ansible te -a 'ls -l /tmp/jsj.tar.gz'
+192.168.1.104 | SUCCESS | rc=0 >>
+-rw-r--r--. 1 root root 626042 Apr 20 23:08 /tmp/jsj.tar.gz
+
+
+
+上传到远端服务器时可以备份一次远程服务器上的原文件
+ansible te -m copy -a 'src=1.txt dest=/tmp/jsj.tar.gz backup=yes'
+ansible te -m copy -a 'src=lzo-2.03.tar.gz dest=/tmp/jsj.tar.gz backup=yes'
+
+备份的文件长这个样的1.txt.2016-04-20@23:14:47~
+[root@admin3 ~]# ansible te -a 'ls -l /tmp/'
+192.168.1.104 | SUCCESS | rc=0 >>
+total 832
+-rw-r--r--. 1 root root      24 Apr 20 23:14 1.txt
+-rw-r--r--. 1 root root      16 Apr 20 23:14 1.txt.2016-04-20@23:14:47~
+-rw-r--r--. 1 root root      16 Apr 20 23:13 jsj.tar.gz
+-rw-r--r--. 1 root root  626042 Apr 20 23:08 jsj.tar.gz.2016-04-20@23:13:59~
+
+
+=============================================================
+ansible te -m shell -a 'systemctl restart httpd.service'
+
+
+
+停止Apache服务
+ansible te -m service -a 'name=httpd state=stopped'
+
+启动Apache服务器
+ansible te -m service -a 'name=httpd state=started'
+
+192.168.1.104 | SUCCESS => {
+    "changed": true, 
+    "name": "httpd", 
+    "state": "started"
+}
+
+从启一个服务，列如Apache
+ansible te -m service -a 'name=httpd state=restarted'
+
+================================================================
+
+判断远端的目录是否存在
+[root@admin3 ~]# ansible te -m file -a 'path=/var/www/ state=directory'
+
+192.168.1.100 | SUCCESS => {
+    "changed": false, 
+    "gid": 0, 
+    "group": "root", 
+    "mode": "0755", 
+    "owner": "root", 
+    "path": "/var/www/", 
+    "secontext": "system_u:object_r:httpd_sys_content_t:s0", 
+    "size": 22, 
+    "state": "directory", 
+    "uid": 0
+}
+
+
+==================将本地的jdk文件使用rsync同步到远端服务器上的/var/www/html目录下===================
+ansible te -m synchronize -a 'src=/tmp/jdk-8u65-linux-x64.rpm dest=/var/www/html'
+
+192.168.1.100 | SUCCESS => {
+    "changed": true, 
+    "cmd": "/usr/bin/rsync --delay-updates -F --compress --archive --rsh '/usr/bin/ssh  -S none -o StrictHostKeyChecking=no' --out-format='<<CHANGED>>%i %n%L' \"/tmp/jdk-8u65-linux-x64.rpm\" \"192.168.1.100:/var/www/html\"", 
+    "msg": "<f+++++++++ jdk-8u65-linux-x64.rpm\n", 
+    "rc": 0, 
+    "stdout_lines": [
+        "<f+++++++++ jdk-8u65-linux-x64.rpm"
+    ]
+}
+
+
+
+
+
